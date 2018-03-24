@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 
@@ -14,9 +15,7 @@ import java.util.stream.Stream;
 public class SimpleSerialPort {
 
     private final SerialPort commPort;
-    private final OutputStream outputStream;
-    private Subject<Character> subject;
-    private boolean isListening = false;
+    private OutputStream outputStream;
 
     public static String[] getPorts() {
         Stream<SerialPort> stream = Arrays.stream(SerialPort.getCommPorts());
@@ -27,13 +26,15 @@ public class SimpleSerialPort {
 
     public SimpleSerialPort(String portName) throws UnsupportedEncodingException {
         this.commPort = SerialPort.getCommPort(portName);
-        this.commPort.openPort();
         this.commPort.setBaudRate(9600);
-        this.outputStream = this.commPort.getOutputStream();
-        this.subject = new Subject<>();
     }
 
     public void write(String s) throws IOException {
+        if(!commPort.isOpen()){
+            commPort.openPort();
+            outputStream = commPort.getOutputStream();
+        }
+        
         char[] chars = s.toCharArray();
 
         for (char c : chars) {
@@ -41,19 +42,7 @@ public class SimpleSerialPort {
         }
     }
 
-    public void subscribe(Observer<Character> observer){
-        this.subject.subscribe(observer);
-        this.startListening();
-    }
-
-    private void startListening(){
-        if(!isListening){
-            this.listen();
-            this.isListening = true;
-        }
-    }
-
-    private void listen() {
+    public void setOnDataReceivedListener(Consumer<Character> callback) {
         this.commPort.addDataListener(new SerialPortPacketListener() {
             @Override
             public int getPacketSize() {
@@ -68,9 +57,13 @@ public class SimpleSerialPort {
             @Override
             public void serialEvent(SerialPortEvent event) {
                 char c = (char) event.getReceivedData()[0];
-                subject.next(c);
+                callback.accept(c);
             }
         });
+        
+        if(!commPort.isOpen()){
+            commPort.openPort();
+        }
     }
 
     public void close(){
