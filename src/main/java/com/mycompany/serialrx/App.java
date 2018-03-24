@@ -8,6 +8,7 @@ package com.mycompany.serialrx;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.Observable;
+import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 import java.io.UnsupportedEncodingException;
 import java.util.logging.Level;
@@ -21,46 +22,30 @@ public class App {
      */
 
     public static SimpleSerialPort port;
+    public static Disposable subscription;
 
     public static void main(String[] args) throws InterruptedException {
-        // TODO code application logic here
-        /*
-        Flowable<String> stringObservable = Flowable.create((emitter) -> {
+        System.out.println("Original thread"  + Thread.currentThread().getName());
+        
+        
+        Flowable<Character> stringObservable = Flowable.create((emitter) -> {
+            System.out.println("Subscribing thread"  + Thread.currentThread().getName());
             String[] ports = SimpleSerialPort.getPorts();
             System.out.println("port:" + ports[0]);
             port = new SimpleSerialPort(ports[0]);
             port.setOnDataReceivedListener((Character data) -> {
-                emitter.onNext(data.toString());
+                emitter.onNext(data);
             });
             System.out.println("Registered");
         }, BackpressureStrategy.BUFFER);
         
         
-        stringObservable.subscribeOn(Schedulers.single()).subscribe((t) -> {
+        Disposable subscription = stringObservable.subscribeOn(Schedulers.single()).subscribe((t) -> {
             System.out.print(t);
         }, (e)->{
             System.out.println("Error:");
             e.printStackTrace();
         });
-         */
-        
-        System.out.println("Original thread"  + Thread.currentThread().getName());
-
-        new Thread(() -> {
-             System.out.println("New thread"  + Thread.currentThread().getName());
-            String[] ports = SimpleSerialPort.getPorts();
-            System.out.println("port:" + ports[0]);
-            try {
-                port = new SimpleSerialPort(ports[0]);
-
-                port.setOnDataReceivedListener((Character data) -> {
-                    System.out.print(data);
-                });
-            } catch (UnsupportedEncodingException ex) {
-                Logger.getLogger(App.class.getName()).log(Level.SEVERE, null, ex);
-            }
-
-        }).start();
 
         while (true) {
             Thread.yield();
