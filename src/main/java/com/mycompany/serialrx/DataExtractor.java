@@ -14,9 +14,15 @@ import java.util.regex.Pattern;
  */
 public class DataExtractor {
 
-    SondeData extract(String validInput) {
+    private final Pattern pattern;
+
+    public DataExtractor() {
         String numberPattern = "(-?\\d+(?:\\.\\d+)?)";
-        Pattern pattern = Pattern.compile("^\\$P," + numberPattern + ",T," + numberPattern + ",H," + numberPattern + ",\\*(\\d\\d)$");
+        pattern = Pattern.compile("^\\$P," + numberPattern + ",T," + numberPattern + ",H," + numberPattern + ",\\*(\\d\\d)$");
+    }
+    
+
+    SondeData extract(String validInput) {   
         Matcher matcher = pattern.matcher(validInput);
         
         int checksum;

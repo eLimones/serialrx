@@ -35,12 +35,19 @@ public class App {
         }, BackpressureStrategy.BUFFER);
 
         ArrayList<Character> arrayList = new ArrayList<>(1024);
-        
+
         Disposable subscription = myObservable
                 .subscribeOn(Schedulers.single())
                 .flatMap(new CharStreamToLines())
-                .subscribe((t) -> {
-                    System.out.println(t);
+                .map(new DataExtractor()::extract)
+                .filter((probeData)-> {return probeData.isValid;})
+                .subscribe((probeData) -> {
+                    System.out.println(
+                            "valid: " + probeData.isValid 
+                            + " P:" + probeData.pressure
+                            + " T:" + probeData.temperature
+                            + " H:" + probeData.humidity
+                    );
                 }, (e) -> {
                     System.out.println("Error:");
                     e.printStackTrace();
