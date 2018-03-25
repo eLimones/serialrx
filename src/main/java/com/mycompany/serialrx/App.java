@@ -38,8 +38,9 @@ public class App {
         
         Disposable subscription = myObservable
                 .subscribeOn(Schedulers.single())
+                .flatMap(new CharStreamToLines())
                 .subscribe((t) -> {
-                    System.out.print(t);
+                    System.out.println(t);
                 }, (e) -> {
                     System.out.println("Error:");
                     e.printStackTrace();
